@@ -1,15 +1,31 @@
-resource "aws_route53_zone" "main" {
-  name = "beita.me"
+variable "domain_name" {
+  default    = "beita.me"
+  type        = string
+  description = "Domain name"
 }
 
-resource "aws_route53_zone" "sub" {
-  name = "terraform-test.beita.me"
+
+#  hosted zone details
+resource "aws_route53_zone" "hosted_zone" {
+  name = var.domain_name
+
+  tags = {
+    Environment = "dev"
+  }
 }
 
-resource "aws_route53_record" "sub-ns" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = "terraform-test.beita.me"
-  type    = "NS"
-  ttl     = "30"
-  records = aws_route53_zone.sub.name_servers
+# record set in route 53
+# terraform aws route 53 record
+
+resource "aws_route53_record" "site_domain" {
+  zone_id = aws_route53_zone.hosted_zone.zone_id
+  name    = "terraform-test.${var.domain_name}"
+  type    = "A"
+
+
+   alias {
+    name                   = aws_lb.my-lb.dns_name
+    zone_id                = aws_lb.my-lb.zone_id
+    evaluate_target_health = true
+  }
 }
